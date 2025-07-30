@@ -1,0 +1,25 @@
+# Use LLVM style as a base (alternatives: Google, Chromium, Mozilla, WebKit)
+BasedOnStyle: LLVM
+
+# Customize formatting options
+IndentWidth: 4              # Number of spaces per indent level
+TabWidth: 4                 # Number of spaces that represent a tab
+UseTab: Never               # Use spaces instead of tabs
+
+BreakBeforeBraces: Allman   # Style of braces (alternatives: Attach, Linux, etc.)
+ColumnLimit: 100            # Maximum line length
+
+AllowShortFunctionsOnASingleLine: InlineOnly  # Allow inline functions on a single line
+
+SpacesBeforeTrailingComments: 1
+SpaceBeforeParens: ControlStatements
+
+# Align parameters in function declarations
+AlignAfterOpenBracket: Align
+
+# Sort includes and organize them
+SortIncludes: true
+IncludeBlocks: Regroup
+
+# C++11 brace initializer formatting
+Cpp11BracedListStyle: true
