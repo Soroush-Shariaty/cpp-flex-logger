@@ -104,13 +104,15 @@ class Logger
 
     Logger &operator=(const Logger &);
 
-    void log(LogLevel level, const std::string &msg, Config config, const char *file, int line, const char *func)
-    {
+    Logger() {}
 
+    static void log(LogLevel level, const std::string &msg, Config config, const char *file, int line, const char *func)
+    {
+        std::once_flag invalidFileFlag;
+        Logger logger;
         if (config.consoleLog.enable)
         {
-            std::string formatted = formatMessage(level, msg, config, file, line, func, Output::Console);
-            std::lock_guard<std::mutex> lock(mutex_);
+            std::string formatted = logger.formatMessage(level, msg, config, file, line, func, Output::Console);
             std::cout << formatted << std::endl;
         }
         if (config.fileLog.enable)
@@ -129,13 +131,12 @@ class Logger
                 logFile.close();
                 logFile.open("log.txt", std::ios::app);
             }
-            std::string formatted = formatMessage(level, msg, config, file, line, func, Output::File);
+            std::string formatted = logger.formatMessage(level, msg, config, file, line, func, Output::File);
             logFile << formatted << std::endl;
 
             logFile.close();
         }
     }
-    Logger() {}
 
   private:
     std::string formatMessage(LogLevel level, const std::string &msg, Config config, const char *file, int line, const char *func, Output output)
@@ -217,16 +218,14 @@ class Logger
         }
     }
     std::mutex mutex_;
-    std::once_flag invalidFileFlag;
 };
 
-Logger logger;
 // Convenience macros
-#define LOG_TRACE(msg, config) logger.log(LogLevel::TRACE, msg, config, __FILE__, __LINE__, __func__)
-#define LOG_DEBUG(msg, config) logger.log(LogLevel::DEBUG, msg, config, __FILE__, __LINE__, __func__)
-#define LOG_INFO(msg, config) logger.log(LogLevel::INFO, msg, config, __FILE__, __LINE__, __func__)
-#define LOG_WARN(msg, config) logger.log(LogLevel::WARN, msg, config, __FILE__, __LINE__, __func__)
-#define LOG_ERROR(msg, config) logger.log(LogLevel::ERROR, msg, config, __FILE__, __LINE__, __func__)
-#define LOG_FATAL(msg, config) logger.log(LogLevel::FATAL, msg, config, __FILE__, __LINE__, __func__)
+#define LOG_TRACE(msg, config) Logger::log(LogLevel::TRACE, msg, config, __FILE__, __LINE__, __func__)
+#define LOG_DEBUG(msg, config) Logger::log(LogLevel::DEBUG, msg, config, __FILE__, __LINE__, __func__)
+#define LOG_INFO(msg, config) Logger::log(LogLevel::INFO, msg, config, __FILE__, __LINE__, __func__)
+#define LOG_WARN(msg, config) Logger::log(LogLevel::WARN, msg, config, __FILE__, __LINE__, __func__)
+#define LOG_ERROR(msg, config) Logger::log(LogLevel::ERROR, msg, config, __FILE__, __LINE__, __func__)
+#define LOG_FATAL(msg, config) Logger::log(LogLevel::FATAL, msg, config, __FILE__, __LINE__, __func__)
 
 #endif // LOGGER_H
