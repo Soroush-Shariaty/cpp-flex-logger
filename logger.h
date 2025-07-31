@@ -10,7 +10,8 @@
 #include <sstream>
 #include <vector>
 
-// Log levels
+namespace cpp_flex_logger
+{
 enum class LogLevel
 {
     TRACE,
@@ -217,15 +218,16 @@ class Logger
             return "";
         }
     }
-    std::mutex mutex_;
 };
 
 // Convenience macros
-#define LOG_TRACE(msg, config) Logger::log(LogLevel::TRACE, msg, config, __FILE__, __LINE__, __func__)
-#define LOG_DEBUG(msg, config) Logger::log(LogLevel::DEBUG, msg, config, __FILE__, __LINE__, __func__)
-#define LOG_INFO(msg, config) Logger::log(LogLevel::INFO, msg, config, __FILE__, __LINE__, __func__)
-#define LOG_WARN(msg, config) Logger::log(LogLevel::WARN, msg, config, __FILE__, __LINE__, __func__)
-#define LOG_ERROR(msg, config) Logger::log(LogLevel::ERROR, msg, config, __FILE__, __LINE__, __func__)
-#define LOG_FATAL(msg, config) Logger::log(LogLevel::FATAL, msg, config, __FILE__, __LINE__, __func__)
+#define LOG_TRACE(msg, config) cpp_flex_logger::Logger::log(LogLevel::TRACE, msg, config, __FILE__, __LINE__, __func__)
+#define LOG_DEBUG(msg, config) cpp_flex_logger::Logger::log(LogLevel::DEBUG, msg, config, __FILE__, __LINE__, __func__)
+#define LOG_INFO(msg, config) cpp_flex_logger::Logger::log(LogLevel::INFO, msg, config, __FILE__, __LINE__, __func__)
+#define LOG_WARN(msg, config) cpp_flex_logger::Logger::log(LogLevel::WARN, msg, config, __FILE__, __LINE__, __func__)
+#define LOG_ERROR(msg, config) cpp_flex_logger::Logger::log(LogLevel::ERROR, msg, config, __FILE__, __LINE__, __func__)
+#define LOG_FATAL(msg, config) cpp_flex_logger::Logger::log(LogLevel::FATAL, msg, config, __FILE__, __LINE__, __func__)
+
+} // namespace cpp_flex_logger
 
 #endif // LOGGER_H

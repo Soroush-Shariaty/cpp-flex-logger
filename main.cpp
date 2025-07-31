@@ -2,7 +2,7 @@
 
 // Example main
 int main() {
-
+    using namespace cpp_flex_logger;
     Config config;
     config.consoleLog.logColors.infoLogColor = Color::Blue;
     config.consoleLog.useBoldText = true;
