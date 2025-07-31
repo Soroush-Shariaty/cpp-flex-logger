@@ -16,7 +16,7 @@ Features include customizable log levels with color support, timestamps, file lo
 
 ## Installation
 
-Simply copy the `logger.h` (or your header filename) into your project include directory, and include it where needed:
+Simply copy the `logger.h` into your project include directory, and include it where needed:
 
 ```cpp
 
