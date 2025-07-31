@@ -140,8 +140,8 @@ class Logger
                                                 "the build directory.\n";
                                });
                 logFile.close();
+                logFile.open("log.txt", std::ios::app);
             }
-            logFile.open("log.txt", std::ios::app);
             std::string formatted = formatMessage(level, msg, config, file, line, func, Output::File);
             logFile << formatted << std::endl;
 
@@ -156,23 +156,21 @@ class Logger
         // Timestamp
         auto now = std::chrono::system_clock::now();
         std::time_t t = std::chrono::system_clock::to_time_t(now);
-        std::string boldFormatter = config.consoleLog.useBoldText ? "[1;" : "[0;";
         std::stringstream ss;
-        Color logColor = getLogColor(level, config);
-        std::string logColorAnsi = getLogColorAnsi(logColor);
+        ss << "[" << std::put_time(std::localtime(&t), "%F %T") << "] ";
+        ss << "[" << LogLevelToString(level) << "] ";
+        ss << "[" << file << ":" << line << " (" << func << ")]";
+        ss << " " << msg;
         if (output == Output::Console)
         {
-            ss << "\033" << boldFormatter << logColorAnsi << "[" << std::put_time(std::localtime(&t), "%F %T") << "] ";
-            ss << "[" << LogLevelToString(level) << "] ";
-            ss << "[" << file << ":" << line << " (" << func << ")]";
-            ss << " " << msg << "\033[0m";
-        }
-        else
-        {
-            ss << "[" << std::put_time(std::localtime(&t), "%F %T") << "] ";
-            ss << "[" << LogLevelToString(level) << "] ";
-            ss << "[" << file << ":" << line << " (" << func << ")]";
-            ss << " " << msg;
+            std::string boldFormatter = config.consoleLog.useBoldText ? "[1;" : "[0;";
+            Color logColor = getLogColor(level, config);
+            std::string logColorAnsi = getLogColorAnsi(logColor);
+            // Apply formatting code
+            std::string current = ss.str();
+            ss.str("");
+            ss.clear();
+            ss << "\033" << boldFormatter << logColorAnsi << current << "\033[0m";
         }
         return ss.str();
     }
