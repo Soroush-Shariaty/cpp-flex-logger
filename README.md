@@ -19,15 +19,6 @@ Features include customizable log levels with color support, timestamps, file lo
 Simply copy the `logger.h` (or your header filename) into your project include directory, and include it where needed:
 
 ```cpp
-#include "Logger.h"
-
-No linking or compilation of separate source files required.
-Usage
-
-Example usage with colors, timestamps, and file locations:
-
-int main() {
-    Logger logger;
 
 #include "logger.h"
 
@@ -50,8 +41,7 @@ int main() {
 
     return 0;
 }
-
-}
+```
 
 ## Contributions
 
