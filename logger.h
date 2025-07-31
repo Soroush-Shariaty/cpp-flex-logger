@@ -1,5 +1,5 @@
-#ifndef LOGGER_H
-#define LOGGER_H
+#ifndef CPP_FLEX_LOGGER_H
+#define CPP_FLEX_LOGGER_H
 
 #include <chrono>
 #include <ctime>
