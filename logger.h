@@ -1,46 +1,79 @@
 #ifndef LOGGER_H
 #define LOGGER_H
 
-#include <iostream>
-#include <mutex>
 #include <chrono>
 #include <ctime>
-#include <sstream>
+#include <fstream>
 #include <iomanip>
+#include <iostream>
+#include <mutex>
+#include <sstream>
 
 // Log levels
-enum class LogLevel { TRACE, DEBUG, INFO, WARN, ERROR, FATAL };
+enum class LogLevel
+{
+    TRACE,
+    DEBUG,
+    INFO,
+    WARN,
+    ERROR,
+    FATAL
+};
 
-enum class Color {Red, Green, Blue, Yellow, Magenta ,White};
+enum class Color
+{
+    Red,
+    Green,
+    Blue,
+    Yellow,
+    Magenta,
+    White
+};
 
-inline const char* LogLevelToString(LogLevel level) {
-    switch(level) {
-    case LogLevel::TRACE: return "TRACE";
-    case LogLevel::DEBUG: return "DEBUG";
-    case LogLevel::INFO:  return "INFO";
-    case LogLevel::WARN:  return "WARN";
-    case LogLevel::ERROR: return "ERROR";
-    case LogLevel::FATAL: return "FATAL";
-    default: return "UNKNOWN";
+enum class Output
+{
+    Console,
+    File
+};
+
+inline const char *LogLevelToString(LogLevel level)
+{
+    switch (level)
+    {
+    case LogLevel::TRACE:
+        return "TRACE";
+    case LogLevel::DEBUG:
+        return "DEBUG";
+    case LogLevel::INFO:
+        return "INFO";
+    case LogLevel::WARN:
+        return "WARN";
+    case LogLevel::ERROR:
+        return "ERROR";
+    case LogLevel::FATAL:
+        return "FATAL";
+    default:
+        return "UNKNOWN";
     }
 }
 
 // Log message sink interface
-class LogSink {
+class LogSink
+{
   public:
     virtual ~LogSink() = default;
-    virtual void log(const std::string& message) = 0;
+    virtual void log(const std::string &message) = 0;
 };
 
 // Console output sink
-class ConsoleSink : public LogSink {
+class ConsoleSink : public LogSink
+{
   public:
-    void log(const std::string& message) override {
-        std::cout << message << std::endl;
-    }
+    void log(const std::string &message) override { std::cout << message << std::endl; }
 };
 
-struct LogColors{
+struct LogColors
+{
     Color traceLogColor{Color::White};
     Color debugLogColor{Color::Green};
     Color infoLogColor{Color::Blue};
@@ -49,73 +82,124 @@ struct LogColors{
     Color fatalLogColor{Color::Red};
 };
 
-struct ShouldAdd{
+struct ShouldAdd
+{
     bool timeStamp{false};
     bool LogLevel{false};
     bool FileInfo{false};
 };
 
-struct Config{
+struct ConsoleLog
+{
+    bool enable{true};
     LogColors logColors;
-    ShouldAdd shouldAdd;
     bool useBoldText{false};
 };
 
+struct FileLog
+{
+    bool enable{false};
+    std::string absoluteFileLocation{"log.txt"};
+};
+
+struct Config
+{
+    ShouldAdd shouldAdd;
+    ConsoleLog consoleLog;
+    FileLog fileLog;
+};
+
 // Logger class
-class Logger {
+class Logger
+{
   public:
-    Logger(const Logger&);
+    Logger(const Logger &);
 
-    Logger& operator=(const Logger&);
+    Logger &operator=(const Logger &);
 
-    void log(LogLevel level, const std::string& msg,
-             Config config, const char* file, int line, const char* func)
+    void log(LogLevel level, const std::string &msg, Config config, const char *file, int line, const char *func)
     {
 
-        std::string formatted = formatMessage(level, msg,config, file, line, func);
+        if (config.consoleLog.enable)
+        {
+            std::string formatted = formatMessage(level, msg, config, file, line, func, Output::Console);
+            std::lock_guard<std::mutex> lock(mutex_);
+            std::cout << formatted << std::endl;
+        }
+        if (config.fileLog.enable)
+        {
+            std::ofstream logFile(config.fileLog.absoluteFileLocation, std::ios::app);
+            if (!logFile)
+            { // Check if file opened successfully
+                std::call_once(invalidFileFlag,
+                               [config]()
+                               {
+                                   std::cerr << "Error opening file \"" << config.fileLog.absoluteFileLocation
+                                             << "\" for writing. Falling back to "
+                                                "default 'log.txt' in "
+                                                "the build directory.\n";
+                               });
+                logFile.close();
+            }
+            logFile.open("log.txt", std::ios::app);
+            std::string formatted = formatMessage(level, msg, config, file, line, func, Output::File);
+            logFile << formatted << std::endl;
 
-        std::lock_guard<std::mutex> lock(mutex_);
-        std::cout << formatted << std::endl;
+            logFile.close();
+        }
     }
-    Logger() : level_(LogLevel::TRACE) {}
+    Logger() {}
 
   private:
-    std::string formatMessage(LogLevel level, const std::string& msg,
-                              Config config, const char* file, int line, const char* func)
+    std::string formatMessage(LogLevel level, const std::string &msg, Config config, const char *file, int line, const char *func, Output output)
     {
         // Timestamp
         auto now = std::chrono::system_clock::now();
         std::time_t t = std::chrono::system_clock::to_time_t(now);
-        std::string boldFormatter = config.useBoldText? "[1;" : "[0;";
+        std::string boldFormatter = config.consoleLog.useBoldText ? "[1;" : "[0;";
         std::stringstream ss;
         Color logColor = getLogColor(level, config);
         std::string logColorAnsi = getLogColorAnsi(logColor);
-        ss << "\033"<<boldFormatter << logColorAnsi <<"[" << std::put_time(std::localtime(&t), "%F %T") << "] ";
-        ss << "[" << LogLevelToString(level) << "] ";
-        ss << "[" << file << ":" << line << " (" << func << ")]";
-        ss << msg<< "\033[0m\n";
+        if (output == Output::Console)
+        {
+            ss << "\033" << boldFormatter << logColorAnsi << "[" << std::put_time(std::localtime(&t), "%F %T") << "] ";
+            ss << "[" << LogLevelToString(level) << "] ";
+            ss << "[" << file << ":" << line << " (" << func << ")]";
+            ss << " " << msg << "\033[0m";
+        }
+        else
+        {
+            ss << "[" << std::put_time(std::localtime(&t), "%F %T") << "] ";
+            ss << "[" << LogLevelToString(level) << "] ";
+            ss << "[" << file << ":" << line << " (" << func << ")]";
+            ss << " " << msg;
+        }
         return ss.str();
     }
-    Color getLogColor(LogLevel level, Config config){
-        switch (level) {
+    Color getLogColor(LogLevel level, Config config)
+    {
+        switch (level)
+        {
         case LogLevel::DEBUG:
-            return config.logColors.debugLogColor;
+            return config.consoleLog.logColors.debugLogColor;
         case LogLevel::ERROR:
-            return config.logColors.errorLogColor;
+            return config.consoleLog.logColors.errorLogColor;
         case LogLevel::FATAL:
-            return config.logColors.fatalLogColor;
+            return config.consoleLog.logColors.fatalLogColor;
         case LogLevel::INFO:
-            return config.logColors.infoLogColor;
+            return config.consoleLog.logColors.infoLogColor;
         case LogLevel::TRACE:
-            return config.logColors.traceLogColor;
+            return config.consoleLog.logColors.traceLogColor;
         case LogLevel::WARN:
-            return config.logColors.warningLogColor;
+            return config.consoleLog.logColors.warningLogColor;
         default:
             return Color::White;
         }
     }
-    std::string getLogColorAnsi(Color color){
-        switch (color) {
+    std::string getLogColorAnsi(Color color)
+    {
+        switch (color)
+        {
         case Color::Blue:
             return "34m";
         case Color::Green:
@@ -133,18 +217,17 @@ class Logger {
         }
     }
 
-
-    LogLevel level_;
     std::mutex mutex_;
+    std::once_flag invalidFileFlag;
 };
 
 Logger logger;
 // Convenience macros
-#define LOG_TRACE(msg,config) logger.log(LogLevel::TRACE, msg, config,__FILE__, __LINE__, __func__)
-#define LOG_DEBUG(msg,config) logger.log(LogLevel::DEBUG, msg, config,__FILE__, __LINE__, __func__)
-#define LOG_INFO(msg,config)  logger.log(LogLevel::INFO,  msg, config,__FILE__, __LINE__, __func__)
-#define LOG_WARN(msg,config)  logger.log(LogLevel::WARN,  msg, config,__FILE__, __LINE__, __func__)
-#define LOG_ERROR(msg,config) logger.log(LogLevel::ERROR, msg, config,__FILE__, __LINE__, __func__)
-#define LOG_FATAL(msg,config) logger.log(LogLevel::FATAL, msg, config,__FILE__, __LINE__, __func__)
+#define LOG_TRACE(msg, config) logger.log(LogLevel::TRACE, msg, config, __FILE__, __LINE__, __func__)
+#define LOG_DEBUG(msg, config) logger.log(LogLevel::DEBUG, msg, config, __FILE__, __LINE__, __func__)
+#define LOG_INFO(msg, config) logger.log(LogLevel::INFO, msg, config, __FILE__, __LINE__, __func__)
+#define LOG_WARN(msg, config) logger.log(LogLevel::WARN, msg, config, __FILE__, __LINE__, __func__)
+#define LOG_ERROR(msg, config) logger.log(LogLevel::ERROR, msg, config, __FILE__, __LINE__, __func__)
+#define LOG_FATAL(msg, config) logger.log(LogLevel::FATAL, msg, config, __FILE__, __LINE__, __func__)
 
 #endif // LOGGER_H

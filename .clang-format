@@ -7,7 +7,7 @@ TabWidth: 4                 # Number of spaces that represent a tab
 UseTab: Never               # Use spaces instead of tabs
 
 BreakBeforeBraces: Allman   # Style of braces (alternatives: Attach, Linux, etc.)
-ColumnLimit: 100            # Maximum line length
+ColumnLimit: 200            # Maximum line length
 
 AllowShortFunctionsOnASingleLine: InlineOnly  # Allow inline functions on a single line
 
