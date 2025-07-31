@@ -8,6 +8,7 @@
 #include <iostream>
 #include <mutex>
 #include <sstream>
+#include <vector>
 
 // Log levels
 enum class LogLevel
@@ -36,6 +37,14 @@ enum class Output
     File
 };
 
+enum class LogContent
+{
+    TimeStamp,
+    LogLevel,
+    LogLocation,
+    Message,
+};
+
 inline const char *LogLevelToString(LogLevel level)
 {
     switch (level)
@@ -57,21 +66,6 @@ inline const char *LogLevelToString(LogLevel level)
     }
 }
 
-// Log message sink interface
-class LogSink
-{
-  public:
-    virtual ~LogSink() = default;
-    virtual void log(const std::string &message) = 0;
-};
-
-// Console output sink
-class ConsoleSink : public LogSink
-{
-  public:
-    void log(const std::string &message) override { std::cout << message << std::endl; }
-};
-
 struct LogColors
 {
     Color traceLogColor{Color::White};
@@ -80,13 +74,6 @@ struct LogColors
     Color warningLogColor{Color::Yellow};
     Color errorLogColor{Color::Magenta};
     Color fatalLogColor{Color::Red};
-};
-
-struct ShouldAdd
-{
-    bool timeStamp{false};
-    bool LogLevel{false};
-    bool FileInfo{false};
 };
 
 struct ConsoleLog
@@ -104,7 +91,7 @@ struct FileLog
 
 struct Config
 {
-    ShouldAdd shouldAdd;
+    std::vector<LogContent> logContentList{LogContent::LogLevel, LogContent::Message};
     ConsoleLog consoleLog;
     FileLog fileLog;
 };
@@ -136,7 +123,7 @@ class Logger
                                {
                                    std::cerr << "Error opening file \"" << config.fileLog.absoluteFileLocation
                                              << "\" for writing. Falling back to "
-                                                "default 'log.txt' in "
+                                                "default \"log.txt\" in "
                                                 "the build directory.\n";
                                });
                 logFile.close();
@@ -157,10 +144,25 @@ class Logger
         auto now = std::chrono::system_clock::now();
         std::time_t t = std::chrono::system_clock::to_time_t(now);
         std::stringstream ss;
-        ss << "[" << std::put_time(std::localtime(&t), "%F %T") << "] ";
-        ss << "[" << LogLevelToString(level) << "] ";
-        ss << "[" << file << ":" << line << " (" << func << ")]";
-        ss << " " << msg;
+        for (auto item : config.logContentList)
+        {
+            switch (item)
+            {
+            case LogContent::LogLevel:
+                ss << "[" << LogLevelToString(level) << "] ";
+                break;
+            case LogContent::TimeStamp:
+                ss << "[" << std::put_time(std::localtime(&t), "%F %T") << "] ";
+                break;
+            case LogContent::LogLocation:
+                ss << "[" << file << ":" << line << " (" << func << ")] ";
+                break;
+            default:
+            case LogContent::Message:
+                ss << msg << " ";
+                break;
+            }
+        }
         if (output == Output::Console)
         {
             std::string boldFormatter = config.consoleLog.useBoldText ? "[1;" : "[0;";
@@ -214,7 +216,6 @@ class Logger
             return "";
         }
     }
-
     std::mutex mutex_;
     std::once_flag invalidFileFlag;
 };

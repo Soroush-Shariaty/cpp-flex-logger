@@ -8,10 +8,11 @@ int main() {
     config.consoleLog.useBoldText = true;
     config.fileLog.enable = true;
     config.fileLog.absoluteFileLocation = "test.txt";
+    config.logContentList = {LogContent::LogLevel, LogContent::TimeStamp, LogContent::LogLocation, LogContent::Message};
 
     LOG_INFO("Starting application...",config);
     LOG_DEBUG("Debugging info",config);
-    LOG_WARN("Warning: Low memory",config);
+    LOG_WARN("Low memory", config);
     LOG_ERROR("Error occurred!",config);
 
     return 0;
