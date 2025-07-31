@@ -42,6 +42,14 @@ int main() {
     return 0;
 }
 ```
+## What you get
+Colored logs in console
+
+<img width="1091" height="86" alt="cpp-flex-logger-terminal" src="https://github.com/user-attachments/assets/f68b8b38-f488-4c81-8cc9-652ce77fad8a" />
+
+Clean logs listed in file
+
+<img width="939" height="140" alt="cpp-logfile" src="https://github.com/user-attachments/assets/37b455a1-1951-489d-9a12-f59cb07ea644" />
 
 ## Contributions
 
