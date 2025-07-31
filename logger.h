@@ -14,12 +14,12 @@ namespace cpp_flex_logger
 {
 enum class LogLevel
 {
-    TRACE,
-    DEBUG,
-    INFO,
-    WARN,
-    ERROR,
-    FATAL
+    Trace,
+    Debug,
+    Info,
+    Warn,
+    Error,
+    Fatal
 };
 
 enum class Color
@@ -50,17 +50,17 @@ inline const char *LogLevelToString(LogLevel level)
 {
     switch (level)
     {
-    case LogLevel::TRACE:
+    case LogLevel::Trace:
         return "TRACE";
-    case LogLevel::DEBUG:
+    case LogLevel::Debug:
         return "DEBUG";
-    case LogLevel::INFO:
+    case LogLevel::Info:
         return "INFO";
-    case LogLevel::WARN:
+    case LogLevel::Warn:
         return "WARN";
-    case LogLevel::ERROR:
+    case LogLevel::Error:
         return "ERROR";
-    case LogLevel::FATAL:
+    case LogLevel::Fatal:
         return "FATAL";
     default:
         return "UNKNOWN";
@@ -101,19 +101,15 @@ struct Config
 class Logger
 {
   public:
-    Logger(const Logger &);
-
-    Logger &operator=(const Logger &);
-
     Logger() {}
 
-    static void log(LogLevel level, const std::string &msg, Config config, const char *file, int line, const char *func)
+    static void Log(LogLevel level, const std::string &msg, Config config, const char *file, int line, const char *func)
     {
         std::once_flag invalidFileFlag;
         Logger logger;
         if (config.consoleLog.enable)
         {
-            std::string formatted = logger.formatMessage(level, msg, config, file, line, func, Output::Console);
+            std::string formatted = logger.FormatMessage(level, msg, config, file, line, func, Output::Console);
             std::cout << formatted << std::endl;
         }
         if (config.fileLog.enable)
@@ -132,7 +128,7 @@ class Logger
                 logFile.close();
                 logFile.open("log.txt", std::ios::app);
             }
-            std::string formatted = logger.formatMessage(level, msg, config, file, line, func, Output::File);
+            std::string formatted = logger.FormatMessage(level, msg, config, file, line, func, Output::File);
             logFile << formatted << std::endl;
 
             logFile.close();
@@ -140,7 +136,7 @@ class Logger
     }
 
   private:
-    std::string formatMessage(LogLevel level, const std::string &msg, Config config, const char *file, int line, const char *func, Output output)
+    std::string FormatMessage(LogLevel level, const std::string &msg, Config config, const char *file, int line, const char *func, Output output)
     {
         // Timestamp
         auto now = std::chrono::system_clock::now();
@@ -168,8 +164,8 @@ class Logger
         if (output == Output::Console)
         {
             std::string boldFormatter = config.consoleLog.useBoldText ? "[1;" : "[0;";
-            Color logColor = getLogColor(level, config);
-            std::string logColorAnsi = getLogColorAnsi(logColor);
+            Color logColor = GetLogColor(level, config);
+            std::string logColorAnsi = GetLogColorAnsi(logColor);
             // Apply formatting code
             std::string current = ss.str();
             ss.str("");
@@ -178,27 +174,27 @@ class Logger
         }
         return ss.str();
     }
-    Color getLogColor(LogLevel level, Config config)
+    Color GetLogColor(LogLevel level, Config config)
     {
         switch (level)
         {
-        case LogLevel::DEBUG:
+        case LogLevel::Debug:
             return config.consoleLog.logColors.debugLogColor;
-        case LogLevel::ERROR:
+        case LogLevel::Error:
             return config.consoleLog.logColors.errorLogColor;
-        case LogLevel::FATAL:
+        case LogLevel::Fatal:
             return config.consoleLog.logColors.fatalLogColor;
-        case LogLevel::INFO:
+        case LogLevel::Info:
             return config.consoleLog.logColors.infoLogColor;
-        case LogLevel::TRACE:
+        case LogLevel::Trace:
             return config.consoleLog.logColors.traceLogColor;
-        case LogLevel::WARN:
+        case LogLevel::Warn:
             return config.consoleLog.logColors.warningLogColor;
         default:
             return Color::White;
         }
     }
-    std::string getLogColorAnsi(Color color)
+    std::string GetLogColorAnsi(Color color)
     {
         switch (color)
         {
@@ -221,12 +217,12 @@ class Logger
 };
 
 // Convenience macros
-#define LOG_TRACE(msg, config) cpp_flex_logger::Logger::log(LogLevel::TRACE, msg, config, __FILE__, __LINE__, __func__)
-#define LOG_DEBUG(msg, config) cpp_flex_logger::Logger::log(LogLevel::DEBUG, msg, config, __FILE__, __LINE__, __func__)
-#define LOG_INFO(msg, config) cpp_flex_logger::Logger::log(LogLevel::INFO, msg, config, __FILE__, __LINE__, __func__)
-#define LOG_WARN(msg, config) cpp_flex_logger::Logger::log(LogLevel::WARN, msg, config, __FILE__, __LINE__, __func__)
-#define LOG_ERROR(msg, config) cpp_flex_logger::Logger::log(LogLevel::ERROR, msg, config, __FILE__, __LINE__, __func__)
-#define LOG_FATAL(msg, config) cpp_flex_logger::Logger::log(LogLevel::FATAL, msg, config, __FILE__, __LINE__, __func__)
+#define LOG_TRACE(msg, config) cpp_flex_logger::Logger::Log(LogLevel::Trace, msg, config, __FILE__, __LINE__, __func__)
+#define LOG_DEBUG(msg, config) cpp_flex_logger::Logger::Log(LogLevel::Debug, msg, config, __FILE__, __LINE__, __func__)
+#define LOG_INFO(msg, config) cpp_flex_logger::Logger::Log(LogLevel::Info, msg, config, __FILE__, __LINE__, __func__)
+#define LOG_WARN(msg, config) cpp_flex_logger::Logger::Log(LogLevel::Warn, msg, config, __FILE__, __LINE__, __func__)
+#define LOG_ERROR(msg, config) cpp_flex_logger::Logger::Log(LogLevel::Error, msg, config, __FILE__, __LINE__, __func__)
+#define LOG_FATAL(msg, config) cpp_flex_logger::Logger::Log(LogLevel::Fatal, msg, config, __FILE__, __LINE__, __func__)
 
 } // namespace cpp_flex_logger
 
