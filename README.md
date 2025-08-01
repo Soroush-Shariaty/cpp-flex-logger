@@ -15,7 +15,7 @@ Features include customizable log levels with color support, timestamps, file lo
 - Currently only support for gcc conpiler
 - Ability to cache messages for logging in a later stage
 - Minimum C++17 required
-- Gcc compatible only
+- **Not** thread-safe for now but will be fixed in later development stages
 
 ## Installation
 
