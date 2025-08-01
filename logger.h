@@ -7,6 +7,7 @@
 #include <iomanip>
 #include <iostream>
 #include <mutex>
+#include <queue>
 #include <sstream>
 #include <vector>
 
@@ -97,11 +98,34 @@ struct Config
     FileLog fileLog;
 };
 
+struct QueuedMessageModel
+{
+    LogLevel loglevel;
+    std::string message;
+    std::string file;
+    int line;
+    std::string func;
+};
+
 // Logger class
 class Logger
 {
   public:
     Logger() {}
+
+    inline static std::queue<QueuedMessageModel> logQueue;
+
+    static void CacheLog(LogLevel level, const std::string &msg, const char *file, int line, const char *func) { Logger::logQueue.push(QueuedMessageModel{level, msg, file, line, func}); }
+
+    static void FlushQueue(Config config)
+    {
+        while (!Logger::logQueue.empty())
+        {
+            auto logModel = Logger::logQueue.front();
+            Log(logModel.loglevel, logModel.message, config, logModel.file.c_str(), logModel.line, logModel.func.c_str());
+            Logger::logQueue.pop();
+        }
+    }
 
     static void Log(LogLevel level, const std::string &msg, Config config, const char *file, int line, const char *func)
     {
@@ -216,13 +240,22 @@ class Logger
     }
 };
 
-// Convenience macros
+// Logging macros
 #define LOG_TRACE(msg, config) cpp_flex_logger::Logger::Log(LogLevel::Trace, msg, config, __FILE__, __LINE__, __func__)
 #define LOG_DEBUG(msg, config) cpp_flex_logger::Logger::Log(LogLevel::Debug, msg, config, __FILE__, __LINE__, __func__)
 #define LOG_INFO(msg, config) cpp_flex_logger::Logger::Log(LogLevel::Info, msg, config, __FILE__, __LINE__, __func__)
 #define LOG_WARN(msg, config) cpp_flex_logger::Logger::Log(LogLevel::Warn, msg, config, __FILE__, __LINE__, __func__)
 #define LOG_ERROR(msg, config) cpp_flex_logger::Logger::Log(LogLevel::Error, msg, config, __FILE__, __LINE__, __func__)
 #define LOG_FATAL(msg, config) cpp_flex_logger::Logger::Log(LogLevel::Fatal, msg, config, __FILE__, __LINE__, __func__)
+
+// Caching macros
+#define LOG_TRACE_QUEUED(msg) cpp_flex_logger::Logger::CacheLog(LogLevel::Trace, msg, __FILE__, __LINE__, __func__)
+#define LOG_DEBUG_QUEUED(msg) cpp_flex_logger::Logger::CacheLog(LogLevel::Debug, msg, __FILE__, __LINE__, __func__)
+#define LOG_INFO_QUEUED(msg) cpp_flex_logger::Logger::CacheLog(LogLevel::Info, msg, __FILE__, __LINE__, __func__)
+#define LOG_WARN_QUEUED(msg) cpp_flex_logger::Logger::CacheLog(LogLevel::Warn, msg, __FILE__, __LINE__, __func__)
+#define LOG_ERROR_QUEUED(msg) cpp_flex_logger::Logger::CacheLog(LogLevel::Error, msg, __FILE__, __LINE__, __func__)
+#define LOG_FATAL_QUEUED(msg) cpp_flex_logger::Logger::CacheLog(LogLevel::Fatal, msg, __FILE__, __LINE__, __func__)
+#define FLUSH_QUEUE(config) cpp_flex_logger::Logger::FlushQueue(config)
 
 } // namespace cpp_flex_logger
 

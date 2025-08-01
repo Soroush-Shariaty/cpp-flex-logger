@@ -12,10 +12,20 @@ int main() {
     config.logContentList = {LogContent::LogLevel, LogContent::TimeStamp, LogContent::LogLocation, LogContent::Message};
 
     // Log your messages into console and file using your specified options
-    LOG_INFO("Starting application...",config);
-    LOG_DEBUG("Debugging info",config);
+    LOG_INFO("Starting application...", config);
+    LOG_DEBUG("Debugging info", config);
     LOG_WARN("Low memory", config);
-    LOG_ERROR("Error occurred!",config);
+    LOG_ERROR("Error occurred!", config);
+
+    // You can also cache the logs for later printing
+    for (int var = 0; var < 5; ++var)
+    {
+        LOG_INFO_QUEUED("Info log queued");
+        LOG_DEBUG_QUEUED("Debug log queued");
+    }
+
+    // Call this macro frequently to print the queued logs (If you are caching the logs)
+    FLUSH_QUEUE(config);
 
     return 0;
 }
