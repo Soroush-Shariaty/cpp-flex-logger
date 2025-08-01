@@ -13,6 +13,9 @@ Features include customizable log levels with color support, timestamps, file lo
 - Configurable log formatting
 - Easy integration into any C++ project
 - Currently only support for gcc conpiler
+- Ability to cache messages for logging in a later stage
+- Minimum C++17 required
+- Gcc compatible only
 
 ## Installation
 
@@ -39,10 +42,22 @@ int main() {
     LOG_WARN("Low memory", config);
     LOG_ERROR("Error occurred!",config);
 
+    // You can also cache the logs for later printing
+    for (int var = 0; var < 5; ++var)
+    {
+        LOG_INFO_QUEUED("Info log queued");
+        LOG_DEBUG_QUEUED("Debug log queued");
+    }
+
+    // Call this macro frequently to print the queued logs (If you are caching the logs)
+    FLUSH_QUEUE(config);
+
+
     return 0;
 }
 ```
-## What you get
+After running you will see:
+
 Colored logs in console
 
 <img width="1091" height="86" alt="cpp-flex-logger-terminal" src="https://github.com/user-attachments/assets/f68b8b38-f488-4c81-8cc9-652ce77fad8a" />
